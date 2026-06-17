@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduFlex SST – Programación Semanal</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{--blue:#1a3a8f;--blue-light:#2d5be3;--green:#5cb800;--green-dark:#4a9a00;--sidebar-w:240px;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f0f2f7;color:#222;}
+
+/* ── LOADING SCREEN ── */
+#loading-screen{position:fixed;inset:0;background:var(--blue);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s;}
+#loading-screen.hide{opacity:0;pointer-events:none;}
+#loading-screen .logo-text{font-size:36px;font-weight:900;color:#fff;margin-bottom:8px;}
+#loading-screen .logo-text span{color:var(--green);}
+#loading-screen p{color:rgba(255,255,255,.6);font-size:13px;}
+.spinner-ring{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── CONFIG BANNER ── */
+#config-banner{display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin:16px;font-size:13px;color:#856404;}
+
+/* ── SIDEBAR ── */
+#sidebar{position:fixed;top:0;left:0;height:100vh;width:var(--sidebar-w);background:var(--blue);color:#fff;display:flex;flex-direction:column;z-index:1000;}
+#sidebar .brand{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.15);}
+#sidebar .brand img{height:44px;object-fit:contain;max-width:100%;}
+#sidebar .brand-fallback{font-size:20px;font-weight:800;color:#fff;}
+#sidebar .brand-fallback span{color:var(--green);}
+#sidebar .brand-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;}
+#sidebar nav{flex:1;overflow-y:auto;padding:8px 0;}
+#sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 18px;color:rgba(255,255,255,.85);text-decoration:none;font-size:14px;border-left:3px solid transparent;transition:.2s;}
+#sidebar nav a:hover,#sidebar nav a.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--green);}
+#sidebar nav a i{width:18px;text-align:center;}
+#sidebar .nav-section{padding:16px 18px 4px;font-size:10px;text-transform:uppercase;color:rgba(255,255,255,.35);letter-spacing:1px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#5cb800;margin-left:auto;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+#sidebar .sidebar-footer{padding:12px 16px;font-size:11px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.1);}
+
+/* ── MAIN ── */
+#main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column;}
+#topbar{background:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e4ed;position:sticky;top:0;z-index:100;}
+#topbar h4{margin:0;font-size:16px;color:var(--blue);font-weight:700;}
+#content{flex:1;padding:24px;}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── CARDS ── */
+.card{border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);}
+.card-header{background:#fff;border-bottom:1px solid #eef0f6;border-radius:12px 12px 0 0!important;padding:16px 20px;}
+.stat-card{border-radius:12px;padding:20px;color:#fff;position:relative;overflow:hidden;}
+.stat-card .icon{font-size:36px;opacity:.2;position:absolute;right:16px;top:50%;transform:translateY(-50%);}
+.stat-card h3{font-size:28px;font-weight:800;margin:0;}
+.stat-card p{margin:0;font-size:12px;opacity:.85;}
+
+/* ── WEEK CALENDAR ── */
+.week-nav{display:flex;align-items:center;gap:10px;}
+.week-nav button{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;}
+#week-label{font-weight:700;font-size:15px;color:var(--blue);}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.day-col{background:#fff;border-radius:10px;min-height:160px;padding:8px;}
+.day-col .day-name{font-size:11px;text-transform:uppercase;color:#888;font-weight:700;text-align:center;margin-bottom:6px;}
+.day-col .day-num{font-size:18px;font-weight:800;text-align:center;color:var(--blue);margin-bottom:8px;width:32px;margin:0 auto 8px;line-height:32px;}
+.day-col.today .day-num{background:var(--blue);color:#fff;border-radius:50%;}
+.act-pill{font-size:11px;padding:4px 6px;border-radius:6px;margin-bottom:4px;cursor:pointer;border-left:3px solid;}
+.act-pill.programado{background:#e8f0fe;border-color:var(--blue-light);color:#1a3a8f;}
+.act-pill.cumplido{background:#e6f9e6;border-color:var(--green);color:#2a6800;}
+.act-pill.no_cumplido{background:#fde8e8;border-color:#dc3545;color:#9c0000;}
+.act-pill.reprogramado{background:#fff3cd;border-color:#ffc107;color:#856404;}
+.act-pill .pill-company{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.act-pill .pill-advisor{opacity:.7;}
+
+/* ── TABLE ── */
+.table thead th{background:var(--blue);color:#fff;font-size:13px;font-weight:600;border:none;padding:10px 12px;}
+.table tbody td{font-size:13px;padding:10px 12px;vertical-align:middle;}
+.table tbody tr:hover{background:#f5f7fe;}
+
+/* ── FORM ── */
+.form-label{font-size:13px;font-weight:600;color:#444;margin-bottom:4px;}
+.form-control,.form-select{font-size:13px;border-radius:8px;border:1px solid #d0d5e8;}
+.form-control:focus,.form-select:focus{border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(45,91,227,.12);}
+.btn-primary{background:var(--blue);border-color:var(--blue);}
+.btn-primary:hover{background:#142d72;border-color:#142d72;}
+.btn-success{background:var(--green);border-color:var(--green);}
+.btn-success:hover{background:var(--green-dark);border-color:var(--green-dark);}
+.section-title{font-size:15px;font-weight:700;color:var(--blue);margin-bottom:16px;}
+
+/* ── STATUS BADGE ── */
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.status-badge.programado{background:#e8f0fe;color:var(--blue);}
+.status-badge.cumplido{background:#e6f9e6;color:#2a6800;}
+.status-badge.no_cumplido{background:#fde8e8;color:#9c0000;}
+.status-badge.reprogramado{background:#fff3cd;color:#856404;}
+
+/* ── PORTAL ── */
+#portal-overlay{display:none;position:fixed;inset:0;background:rgba(20,30,70,.88);z-index:2000;align-items:center;justify-content:center;}
+#portal-overlay.show{display:flex;}
+.portal-box{background:#fff;border-radius:16px;padding:36px;width:380px;text-align:center;}
+#portal-view{display:none;position:fixed;inset:0;background:#f0f2f7;z-index:1999;overflow-y:auto;}
+#portal-view .portal-header{background:var(--blue);color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px;}
+#portal-view .portal-header img{height:40px;}
+.sig-preview{max-height:80px;border:1px solid #dde;border-radius:6px;padding:4px;background:#fafafa;}
+.empty-state{text-align:center;padding:48px;color:#aaa;}
+.empty-state i{font-size:48px;margin-bottom:12px;display:block;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);}
+  #sidebar.open{transform:translateX(0);}
+  #main{margin-left:0;}
+  .week-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOADING ══ -->
+<div id="loading-screen">
+  <div class="spinner-ring"></div>
+  <div class="logo-text">edu<span>flex</span></div>
+  <p id="loading-msg">Conectando con Firebase…</p>
+</div>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<div id="sidebar">
+  <div class="brand">
+    <img id="sidebar-logo" src="" alt="" style="display:none;" onerror="this.style.display='none'">
+    <div class="brand-fallback" id="sidebar-brand-text">edu<span>flex</span></div>
+    <div class="brand-sub">Game Consulting SAS · SST</div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a href="#" onclick="showPage('dashboard')" id="nav-dashboard"><i class="fas fa-calendar-week"></i>Dashboard Semanal<span class="sync-dot ms-auto"></span></a>
+    <div class="nav-section">Configuración</div>
+    <a href="#" onclick="showPage('companies')" id="nav-companies"><i class="fas fa-building"></i>Empresas</a>
+    <a href="#" onclick="showPage('activities')" id="nav-activities"><i class="fas fa-clipboard-list"></i>Actividades</a>
+    <a href="#" onclick="showPage('advisors')" id="nav-advisors"><i class="fas fa-user-tie"></i>Asesores SST</a>
+    <div class="nav-section">Operación</div>
+    <a href="#" onclick="showPage('assignments')" id="nav-assignments"><i class="fas fa-calendar-plus"></i>Asignaciones</a>
+    <a href="#" onclick="showPage('compliance')" id="nav-compliance"><i class="fas fa-check-circle"></i>Cumplimiento</a>
+    <div class="nav-section">Reportes</div>
+    <a href="#" onclick="showPage('reports')" id="nav-reports"><i class="fas fa-file-pdf"></i>Informes PDF</a>
+    <div class="nav-section">Acceso</div>
+    <a href="#" onclick="openPortal()" id="nav-portal"><i class="fas fa-sign-in-alt"></i>Portal Asesores</a>
+    <a href="#" onclick="showPage('settings')" id="nav-settings"><i class="fas fa-cog"></i>Configuración</a>
+  </nav>
+  <div class="sidebar-footer"><i class="fas fa-cloud me-1"></i>Firebase · Sincronizado</div>
+</div>
+
+<!-- ══════════════════════ MAIN ══════════════════════ -->
+<div id="main">
+  <div id="topbar">
+    <h4 id="page-title"><i class="fas fa-calendar-week me-2"></i>Dashboard Semanal</h4>
+    <div class="d-flex gap-2 align-items-center">
+      <span class="badge bg-success"><i class="fas fa-circle me-1" style="font-size:8px;"></i>En línea</span>
+      <button class="btn btn-sm btn-outline-primary" onclick="openPortal()"><i class="fas fa-sign-in-alt me-1"></i>Portal Asesores</button>
+    </div>
+  </div>
+  <div id="config-banner">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Configura Firebase:</strong> Edita las líneas marcadas con <code>TU-</code> al final del archivo con tus credenciales de Firebase.
+  </div>
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="row g-3 mb-4" id="stats-row"></div>
+      <div class="card mb-3">
+        <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+          <div class="week-nav">
+            <button onclick="changeWeek(-1)"><i class="fas fa-chevron-left"></i></button>
+            <span id="week-label"></span>
+            <button onclick="changeWeek(1)"><i class="fas fa-chevron-right"></i></button>
+            <button class="btn btn-sm btn-outline-secondary ms-1" onclick="goToday()">Hoy</button>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="act-pill programado px-2 py-1">Programado</span>
+            <span class="act-pill cumplido px-2 py-1">Cumplido</span>
+            <span class="act-pill no_cumplido px-2 py-1">No Cumplido</span>
+            <span class="act-pill reprogramado px-2 py-1">Reprogramado</span>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          <div class="week-grid" id="week-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPANIES -->
+    <div class="page" id="page-companies">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="section-title mb-0"><i class="fas fa-building me-2"></i>Empresas Cliente</h5>
+        <button class="btn btn-primary btn-sm" onclick="openModal('company-modal')"><i class="fas fa-plus me-1"></i>Nueva Empresa</button>
+      </div>
+      <div class="card"><div class="card-body p-0">
+        <table class="table mb-0"><thead><tr><th>#</th><th>Empresa</th><th>NIT</th><th>Ciudad</th><th>Contacto</th><th>Teléfono</th><th>Acciones</th></tr></thead>
+        <tbody id="companies-tbody"></tbody></table>
+      </div></div>
+    </div>
+
+    <!-- ACTIVITIES -->
+    <div class="page" id="page-activities">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="section-title mb-0"><i class="fas fa-clipboard-list me-2"></i>Actividades SST</h5>
+        <button class="btn btn-primary btn-sm" onclick="openModal('activity-modal')"><i class="fas fa-plus me-1"></i>Nueva Actividad</button>
+      </div>
+      <div class="card"><div class="card-body p-0">
+        <table class="table mb-0"><thead><tr><th>#</th><th>Actividad</th><th>Categoría</th><th>Descripción</th><th>Duración</th><th>Acciones</th></tr></thead>
+        <tbody id="activities-tbody"></tbody></table>
+      </div></div>
+    </div>
+
+    <!-- ADVISORS -->
+    <div class="page" id="page-advisors">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="section-title mb-0"><i class="fas fa-user-tie me-2"></i>Asesores SST</h5>
+        <button class="btn btn-primary btn-sm" onclick="openModal('advisor-modal')"><i class="fas fa-plus me-1"></i>Nuevo Asesor</button>
+      </div>
+      <div class="card"><div class="card-body p-0">
+        <table class="table mb-0"><thead><tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Nivel</th><th>Especialidad</th><th>Firma</th><th>Acciones</th></tr></thead>
+        <tbody id="advisors-tbody"></tbody></table>
+      </div></div>
+    </div>
+
+    <!-- ASSIGNMENTS -->
+    <div class="page" id="page-assignments">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="section-title mb-0"><i class="fas fa-calendar-plus me-2"></i>Asignaciones</h5>
+        <button class="btn btn-primary btn-sm" onclick="openModal('assignment-modal')"><i class="fas fa-plus me-1"></i>Nueva Asignación</button>
+      </div>
+      <div class="card mb-3"><div class="card-body">
+        <div class="row g-2">
+          <div class="col-md-3"><select class="form-select form-select-sm" id="filter-company" onchange="renderAssignments()"><option value="">Todas las empresas</option></select></div>
+          <div class="col-md-3"><select class="form-select form-select-sm" id="filter-advisor" onchange="renderAssignments()"><option value="">Todos los asesores</option></select></div>
+          <div class="col-md-2"><input type="month" class="form-control form-control-sm" id="filter-month" onchange="renderAssignments()"></div>
+          <div class="col-md-2"><select class="form-select form-select-sm" id="filter-status" onchange="renderAssignments()">
+            <option value="">Todos los estados</option><option value="programado">Programado</option>
+            <option value="cumplido">Cumplido</option><option value="no_cumplido">No Cumplido</option><option value="reprogramado">Reprogramado</option>
+          </select></div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-body p-0">
+        <table class="table mb-0"><thead><tr><th>Fecha</th><th>Hora</th><th>Empresa</th><th>Actividad</th><th>Asesor</th><th>Estado</th><th>Observaciones</th><th>Acciones</th></tr></thead>
+        <tbody id="assignments-tbody"></tbody></table>
+      </div></div>
+    </div>
+
+    <!-- COMPLIANCE -->
+    <div class="page" id="page-compliance">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="section-title mb-0"><i class="fas fa-check-circle me-2"></i>Verificación de Cumplimiento</h5>
+      </div>
+      <div class="card mb-3"><div class="card-body">
+        <div class="row g-2">
+          <div class="col-md-3"><input type="week" class="form-control form-control-sm" id="compliance-week" onchange="renderCompliance()"></div>
+          <div class="col-md-3"><select class="form-select form-select-sm" id="compliance-advisor" onchange="renderCompliance()"><option value="">Todos los asesores</option></select></div>
+        </div>
+      </div></div>
+      <div id="compliance-list"></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="section-title mb-0"><i class="fas fa-file-pdf me-2"></i>Informes Mensuales</h5>
+      </div>
+      <div class="card mb-4"><div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label">Empresa</label><select class="form-select" id="report-company"><option value="">Todas las empresas</option></select></div>
+          <div class="col-md-3"><label class="form-label">Mes / Año</label><input type="month" class="form-control" id="report-month"></div>
+          <div class="col-md-3 d-flex align-items-end"><button class="btn btn-danger w-100" onclick="generatePDF()"><i class="fas fa-file-pdf me-2"></i>Descargar PDF</button></div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-header"><strong>Vista previa</strong></div>
+        <div class="card-body" id="report-preview"><div class="empty-state"><i class="fas fa-file-alt"></i>Selecciona empresa y mes</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <h5 class="section-title mb-3"><i class="fas fa-cog me-2"></i>Configuración</h5>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card"><div class="card-header"><strong><i class="fas fa-image me-2"></i>Logo</strong></div>
+          <div class="card-body">
+            <div id="logo-preview-wrap" style="display:none;" class="mb-3"><img id="logo-preview-img" src="" style="max-height:70px;border:1px solid #eee;border-radius:8px;padding:6px;"></div>
+            <label class="form-label">Subir logo (PNG/JPG)</label>
+            <input type="file" class="form-control" id="logo-upload" accept="image/*" onchange="uploadLogo(this)">
+            <button class="btn btn-outline-danger btn-sm mt-2" onclick="removeLogo()"><i class="fas fa-trash me-1"></i>Eliminar logo</button>
+            <p class="text-muted mt-2" style="font-size:12px;">El logo se guarda en Firestore y se comparte con todos los usuarios.</p>
+          </div></div>
+        </div>
+        <div class="col-md-6">
+          <div class="card"><div class="card-header"><strong><i class="fas fa-info-circle me-2"></i>Datos de la Organización</strong></div>
+          <div class="card-body">
+            <div class="mb-2"><label class="form-label">Nombre organización</label><input type="text" class="form-control" id="org-name"></div>
+            <div class="mb-2"><label class="form-label">NIT</label><input type="text" class="form-control" id="org-nit"></div>
+            <div class="mb-2"><label class="form-label">Dirección</label><input type="text" class="form-control" id="org-address"></div>
+            <div class="mb-3"><label class="form-label">Teléfono</label><input type="text" class="form-control" id="org-phone"></div>
+            <button class="btn btn-primary" onclick="saveOrgSettings()"><i class="fas fa-save me-2"></i>Guardar</button>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════ MODALS ══════════════════════ -->
+
+<!-- Company -->
+<div class="modal fade" id="company-modal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header" style="background:var(--blue);color:#fff;">
+    <h5 class="modal-title"><i class="fas fa-building me-2"></i>Empresa Cliente</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="company-id">
+    <div class="row g-3">
+      <div class="col-md-8"><label class="form-label">Razón Social *</label><input type="text" class="form-control" id="company-name"></div>
+      <div class="col-md-4"><label class="form-label">NIT *</label><input type="text" class="form-control" id="company-nit"></div>
+      <div class="col-md-6"><label class="form-label">Dirección</label><input type="text" class="form-control" id="company-address"></div>
+      <div class="col-md-6"><label class="form-label">Ciudad</label><input type="text" class="form-control" id="company-city"></div>
+      <div class="col-md-4"><label class="form-label">Contacto</label><input type="text" class="form-control" id="company-contact"></div>
+      <div class="col-md-4"><label class="form-label">Teléfono</label><input type="text" class="form-control" id="company-phone"></div>
+      <div class="col-md-4"><label class="form-label">Email</label><input type="email" class="form-control" id="company-email"></div>
+      <div class="col-12"><label class="form-label">Actividad económica</label><input type="text" class="form-control" id="company-activity"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveCompany()"><i class="fas fa-save me-1"></i>Guardar</button>
+  </div>
+</div></div></div>
+
+<!-- Activity -->
+<div class="modal fade" id="activity-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header" style="background:var(--blue);color:#fff;">
+    <h5 class="modal-title"><i class="fas fa-clipboard-list me-2"></i>Actividad SST</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="activity-id">
+    <div class="mb-3"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="activity-name"></div>
+    <div class="mb-3"><label class="form-label">Categoría</label>
+      <select class="form-select" id="activity-category">
+        <option>Inspección de seguridad</option><option>Capacitación SST</option><option>Simulacro</option>
+        <option>Auditoría interna</option><option>Investigación de accidentes</option><option>Seguimiento médico</option>
+        <option>Comité COPASST</option><option>Entrega de EPP</option><option>Actualización IPER</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="mb-3"><label class="form-label">Descripción</label><textarea class="form-control" id="activity-desc" rows="3"></textarea></div>
+    <div class="mb-3"><label class="form-label">Duración estimada (horas)</label><input type="number" class="form-control" id="activity-duration" min="0.5" step="0.5" value="1"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveActivity()"><i class="fas fa-save me-1"></i>Guardar</button>
+  </div>
+</div></div></div>
+
+<!-- Advisor -->
+<div class="modal fade" id="advisor-modal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header" style="background:var(--blue);color:#fff;">
+    <h5 class="modal-title"><i class="fas fa-user-tie me-2"></i>Asesor SST</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="advisor-id">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Nombre completo *</label><input type="text" class="form-control" id="advisor-name"></div>
+      <div class="col-md-6"><label class="form-label">Cédula * <small class="text-muted fw-normal">(acceso al portal)</small></label><input type="text" class="form-control" id="advisor-cedula"></div>
+      <div class="col-md-6"><label class="form-label">Teléfono</label><input type="text" class="form-control" id="advisor-phone"></div>
+      <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" id="advisor-email"></div>
+      <div class="col-md-6"><label class="form-label">Nivel de formación</label>
+        <select class="form-select" id="advisor-level">
+          <option>Técnico SST</option><option>Tecnólogo SST</option><option>Profesional SST</option>
+          <option>Especialista SST</option><option>Magíster SST</option>
+        </select>
+      </div>
+      <div class="col-md-6"><label class="form-label">Licencia / Especialidad</label><input type="text" class="form-control" id="advisor-specialty"></div>
+      <div class="col-12">
+        <label class="form-label">Firma (JPG/PNG)</label>
+        <input type="file" class="form-control" id="advisor-signature-file" accept="image/*" onchange="previewSignature(this)">
+        <div id="sig-preview-container" style="display:none;" class="mt-2">
+          <img id="sig-preview" class="sig-preview" src="" alt="Firma">
+          <button class="btn btn-outline-danger btn-sm ms-2" onclick="clearSignature()"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveAdvisor()"><i class="fas fa-save me-1"></i>Guardar</button>
+  </div>
+</div></div></div>
+
+<!-- Assignment -->
+<div class="modal fade" id="assignment-modal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header" style="background:var(--blue);color:#fff;">
+    <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i>Asignación</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="assignment-id">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Empresa *</label><select class="form-select" id="assignment-company"></select></div>
+      <div class="col-md-6"><label class="form-label">Actividad *</label><select class="form-select" id="assignment-activity"></select></div>
+      <div class="col-md-6"><label class="form-label">Asesor SST *</label><select class="form-select" id="assignment-advisor"></select></div>
+      <div class="col-md-3"><label class="form-label">Fecha *</label><input type="date" class="form-control" id="assignment-date"></div>
+      <div class="col-md-3"><label class="form-label">Hora</label><input type="time" class="form-control" id="assignment-time" value="08:00"></div>
+      <div class="col-md-4"><label class="form-label">Estado</label>
+        <select class="form-select" id="assignment-status">
+          <option value="programado">Programado</option><option value="cumplido">Cumplido</option>
+          <option value="no_cumplido">No Cumplido</option><option value="reprogramado">Reprogramado</option>
+        </select>
+      </div>
+      <div class="col-md-8"><label class="form-label">Observaciones</label><input type="text" class="form-control" id="assignment-notes"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveAssignment()"><i class="fas fa-save me-1"></i>Guardar</button>
+  </div>
+</div></div></div>
+
+<!-- Status Update -->
+<div class="modal fade" id="status-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header" style="background:var(--green);color:#fff;">
+    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Actualizar Estado</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="status-assignment-id">
+    <div class="mb-3"><label class="form-label">Estado</label>
+      <select class="form-select" id="status-value">
+        <option value="programado">Programado</option><option value="cumplido">Cumplido</option>
+        <option value="no_cumplido">No Cumplido</option><option value="reprogramado">Reprogramado</option>
+      </select>
+    </div>
+    <div class="mb-3"><label class="form-label">Observaciones</label><textarea class="form-control" id="status-notes" rows="3"></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button class="btn btn-success" onclick="updateStatus()"><i class="fas fa-save me-1"></i>Actualizar</button>
+  </div>
+</div></div></div>
+
+<!-- ══ PORTAL ══ -->
+<div id="portal-overlay">
+  <div class="portal-box shadow-lg">
+    <img id="portal-logo" src="" alt="EduFlex" style="height:52px;margin-bottom:8px;" onerror="this.style.display='none'">
+    <div style="font-size:22px;font-weight:800;color:var(--blue);">edu<span style="color:var(--green)">flex</span></div>
+    <p style="color:#666;font-size:13px;margin-bottom:20px;">Portal de Asesores SST</p>
+    <div class="mb-3 text-start"><label class="form-label">Número de Cédula</label>
+      <input type="text" class="form-control" id="portal-cedula" placeholder="Ingresa tu cédula" onkeydown="if(event.key==='Enter')portalLogin()">
+    </div>
+    <div id="portal-error" class="alert alert-danger d-none py-2" style="font-size:13px;">Cédula no encontrada.</div>
+    <button class="btn btn-primary w-100 mb-2" onclick="portalLogin()"><i class="fas fa-sign-in-alt me-2"></i>Ingresar</button>
+    <button class="btn btn-outline-secondary w-100 btn-sm" onclick="closePortal()">Cancelar</button>
+  </div>
+</div>
+
+<div id="portal-view">
+  <div class="portal-header">
+    <img id="portal-view-logo" src="" onerror="this.style.display='none'" alt="EduFlex">
+    <div>
+      <div style="font-size:16px;font-weight:700;">Portal Asesor SST</div>
+      <div style="font-size:12px;opacity:.7;" id="portal-welcome"></div>
+    </div>
+    <button class="btn btn-outline-light btn-sm ms-auto" onclick="exitPortal()"><i class="fas fa-sign-out-alt me-1"></i>Salir</button>
+  </div>
+  <div style="padding:24px;max-width:900px;margin:0 auto;">
+    <div class="row g-3 mb-4" id="portal-stats"></div>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Mis Actividades</strong>
+        <input type="month" class="form-control form-control-sm w-auto" id="portal-month" onchange="renderPortalActivities()">
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0"><thead><tr><th>Fecha</th><th>Hora</th><th>Empresa</th><th>Actividad</th><th>Estado</th><th>Observaciones</th><th>Acción</th></tr></thead>
+        <tbody id="portal-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+  <div id="toast" class="toast align-items-center text-bg-success border-0">
+    <div class="d-flex"><div class="toast-body" id="toast-msg">Guardado</div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ SCRIPTS ══════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  🔧 CONFIGURACIÓN FIREBASE — Reemplaza con tus valores
+//     (Los encuentras en: Firebase Console → Tu proyecto
+//      → Configuración ⚙ → Tus apps → SDK)
+// ════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyCLFku2r81R2EGeEn0-ieNnZKIohej584A",
+  authDomain:        "edu-programacion.firebaseapp.com",
+  projectId:         "edu-programacion",
+  storageBucket:     "edu-programacion.firebasestorage.app",
+  messagingSenderId: "966849899468",
+  appId:             "1:966849899468:web:a2e4526a3afda247a18b69"
+};
+// ════════════════════════════════════════════════════════
+
+// ── Detectar si la config es la de ejemplo
+const isDemo = firebaseConfig.apiKey === "TU-API-KEY";
+
+// ── Init Firebase
+if(!isDemo){
+  firebase.initializeApp(firebaseConfig);
+}
+
+// ── Firestore reference
+const db = isDemo ? null : firebase.firestore();
+
+// ── Cache local (actualizado por listeners en tiempo real)
+const cache = { companies:[], activities:[], advisors:[], assignments:[], settings:{}, logo:'' };
+
+// ════════════════════ CAPA DE DATOS ════════════════════
+// Si Firebase no está configurado, cae en localStorage como respaldo
+const LS = {
+  get(k){try{return JSON.parse(localStorage.getItem('ef_'+k)||'[]');}catch{return[];}},
+  set(k,v){localStorage.setItem('ef_'+k,JSON.stringify(v));},
+  getStr(k,d=''){return localStorage.getItem('ef_'+k)||d;},
+  setStr(k,v){localStorage.setItem('ef_'+k,v);}
+};
+
+async function fsGet(col){ if(isDemo) return LS.get(col); const snap=await db.collection(col).get(); return snap.docs.map(d=>({id:d.id,...d.data()}));}
+async function fsSet(col,id,data){ if(isDemo){const arr=LS.get(col);const i=arr.findIndex(x=>x.id===id);if(i>=0)arr[i]=data;else arr.push(data);LS.set(col,arr);return;} await db.collection(col).doc(id).set(data);}
+async function fsDel(col,id){ if(isDemo){LS.set(col,LS.get(col).filter(x=>x.id!==id));return;} await db.collection(col).doc(id).delete();}
+async function fsGetDoc(col,id){ if(isDemo){const arr=LS.get(col);return arr.find(x=>x.id===id)||null;} const d=await db.collection(col).doc(id).get(); return d.exists?{id:d.id,...d.data()}:null;}
+async function fsSetDoc(col,id,data){ if(isDemo){LS.setStr(col+'_'+id,JSON.stringify(data));return;} await db.collection(col).doc(id).set(data,{merge:true});}
+async function fsGetSettings(){ if(isDemo){return JSON.parse(localStorage.getItem('ef_org')||'{}');} const d=await db.collection('settings').doc('org').get(); return d.exists?d.data():{};}
+
+// ════════════════════ LISTENERS TIEMPO REAL ════════════════════
+function initRealtimeListeners(){
+  if(isDemo) return; // sin listeners en modo demo
+  db.collection('companies').onSnapshot(snap=>{
+    cache.companies=snap.docs.map(d=>({id:d.id,...d.data()}));
+    refreshCurrentPage();
+  });
+  db.collection('activities').onSnapshot(snap=>{
+    cache.activities=snap.docs.map(d=>({id:d.id,...d.data()}));
+    refreshCurrentPage();
+  });
+  db.collection('advisors').onSnapshot(snap=>{
+    cache.advisors=snap.docs.map(d=>({id:d.id,...d.data()}));
+    refreshCurrentPage();
+  });
+  db.collection('assignments').onSnapshot(snap=>{
+    cache.assignments=snap.docs.map(d=>({id:d.id,...d.data()}));
+    refreshCurrentPage();
+  });
+  db.collection('settings').doc('app').onSnapshot(snap=>{
+    if(snap.exists){
+      const d=snap.data();
+      if(d.logo){cache.logo=d.logo;applyLogo(d.logo);}
+    }
+  });
+}
+
+async function loadAllCache(){
+  cache.companies  = await fsGet('companies');
+  cache.activities = await fsGet('activities');
+  cache.advisors   = await fsGet('advisors');
+  cache.assignments= await fsGet('assignments');
+  if(!isDemo){
+    const d=await db.collection('settings').doc('app').get();
+    if(d.exists&&d.data().logo){cache.logo=d.data().logo;applyLogo(d.data().logo);}
+  } else {
+    const logo=LS.getStr('logo');
+    if(logo){cache.logo=logo;applyLogo(logo);}
+  }
+}
+
+function refreshCurrentPage(){
+  const active=document.querySelector('.page.active');
+  if(!active) return;
+  const id=active.id.replace('page-','');
+  if(id==='dashboard') renderDashboard();
+  else if(id==='companies') renderCompanies();
+  else if(id==='activities') renderActivities();
+  else if(id==='advisors') renderAdvisors();
+  else if(id==='assignments') renderAssignments();
+  else if(id==='compliance') renderCompliance();
+  else if(id==='reports') renderReportPreview();
+}
+
+// ════════════════════ UTILS ════════════════════
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);dt.setHours(0,0,0,0);return dt;}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function fmtDate(d){if(!d)return'';const dt=new Date(d+'T00:00');return dt.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function fmtMonthYear(ym){if(!ym)return'';const[y,m]=ym.split('-');const names=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];return names[parseInt(m)-1]+' '+y;}
+function isoDate(d){return d.toISOString().slice(0,10);}
+function statusLabel(s){return{programado:'Programado',cumplido:'Cumplido',no_cumplido:'No Cumplido',reprogramado:'Reprogramado'}[s]||s;}
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.className=`toast align-items-center text-bg-${type} border-0`;document.getElementById('toast-msg').textContent=msg;new bootstrap.Toast(t,{delay:3000}).show();}
+
+function gc(id,def=''){ // get company/activity/advisor name
+  return{
+    co: cache.companies.find(c=>c.id===id)||{name:def||'—'},
+    ac: cache.activities.find(a=>a.id===id)||{name:def||'—'},
+    ad: cache.advisors.find(a=>a.id===id)||{name:def||'—'}
+  };
+}
+
+// ════════════════════ NAVIGATION ════════════════════
+let currentWeekStart = getMonday(new Date());
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav a').forEach(a=>a.classList.remove('active'));
+  const page=document.getElementById('page-'+name);
+  if(page)page.classList.add('active');
+  const nav=document.getElementById('nav-'+name);
+  if(nav)nav.classList.add('active');
+  const icons={dashboard:'calendar-week',companies:'building',activities:'clipboard-list',advisors:'user-tie',assignments:'calendar-plus',compliance:'check-circle',reports:'file-pdf',settings:'cog'};
+  const titles={dashboard:'Dashboard Semanal',companies:'Empresas',activities:'Actividades SST',advisors:'Asesores SST',assignments:'Asignaciones',compliance:'Verificación de Cumplimiento',reports:'Informes Mensuales',settings:'Configuración'};
+  document.getElementById('page-title').innerHTML=`<i class="fas fa-${icons[name]||'circle'} me-2"></i>${titles[name]||name}`;
+  if(name==='dashboard')renderDashboard();
+  if(name==='companies')renderCompanies();
+  if(name==='activities')renderActivities();
+  if(name==='advisors')renderAdvisors();
+  if(name==='assignments'){populateFilterSelects();renderAssignments();}
+  if(name==='compliance'){populateComplianceSelects();renderCompliance();}
+  if(name==='reports'){populateReportSelects();renderReportPreview();}
+  if(name==='settings')loadSettings();
+}
+
+function openModal(id){
+  if(id==='company-modal') clearCompanyForm();
+  if(id==='activity-modal') clearActivityForm();
+  if(id==='advisor-modal') clearAdvisorForm();
+  if(id==='assignment-modal'){populateAssignmentSelects();clearAssignmentForm();}
+  new bootstrap.Modal(document.getElementById(id)).show();
+}
+
+// ════════════════════ LOGO ════════════════════
+function applyLogo(src){
+  const sl=document.getElementById('sidebar-logo');
+  const bt=document.getElementById('sidebar-brand-text');
+  if(src){sl.src=src;sl.style.display='block';bt.style.display='none';}
+  else{sl.style.display='none';bt.style.display='block';}
+  ['portal-logo','portal-view-logo'].forEach(id=>{const el=document.getElementById(id);if(el)el.src=src||'';});
+}
+function uploadLogo(input){
+  const f=input.files[0];if(!f)return;
+  if(f.size>500000){alert('El logo debe ser menor a 500KB');return;}
+  const r=new FileReader();
+  r.onload=async e=>{
+    const src=e.target.result;
+    if(!isDemo){ await db.collection('settings').doc('app').set({logo:src},{merge:true}); }
+    else{ LS.setStr('logo',src); }
+    cache.logo=src;applyLogo(src);
+    document.getElementById('logo-preview-img').src=src;document.getElementById('logo-preview-wrap').style.display='block';
+    showToast('Logo guardado');
+  };r.readAsDataURL(f);
+}
+function removeLogo(){
+  if(!isDemo){ db.collection('settings').doc('app').set({logo:''},{merge:true}); }
+  else{ localStorage.removeItem('ef_logo'); }
+  cache.logo='';applyLogo('');
+  document.getElementById('logo-preview-wrap').style.display='none';
+  document.getElementById('logo-upload').value='';
+  showToast('Logo eliminado','warning');
+}
+
+// ════════════════════ SETTINGS ════════════════════
+async function loadSettings(){
+  const logo=cache.logo;
+  if(logo){document.getElementById('logo-preview-img').src=logo;document.getElementById('logo-preview-wrap').style.display='block';}
+  else document.getElementById('logo-preview-wrap').style.display='none';
+  const org=await fsGetSettings();
+  document.getElementById('org-name').value=org.name||'';
+  document.getElementById('org-nit').value=org.nit||'';
+  document.getElementById('org-address').value=org.address||'';
+  document.getElementById('org-phone').value=org.phone||'';
+}
+async function saveOrgSettings(){
+  const org={name:document.getElementById('org-name').value,nit:document.getElementById('org-nit').value,
+    address:document.getElementById('org-address').value,phone:document.getElementById('org-phone').value};
+  if(!isDemo){ await db.collection('settings').doc('org').set(org,{merge:true}); }
+  else{ localStorage.setItem('ef_org',JSON.stringify(org)); }
+  showToast('Configuración guardada');
+}
+
+// ════════════════════ COMPANIES ════════════════════
+function clearCompanyForm(){['company-id','company-name','company-nit','company-address','company-city','company-contact','company-phone','company-email','company-activity'].forEach(id=>document.getElementById(id).value='');}
+async function saveCompany(){
+  const name=document.getElementById('company-name').value.trim();
+  const nit=document.getElementById('company-nit').value.trim();
+  if(!name||!nit){alert('Razón social y NIT son obligatorios');return;}
+  const id=document.getElementById('company-id').value||uid();
+  const obj={id,name,nit,address:document.getElementById('company-address').value,city:document.getElementById('company-city').value,contact:document.getElementById('company-contact').value,phone:document.getElementById('company-phone').value,email:document.getElementById('company-email').value,activity:document.getElementById('company-activity').value};
+  await fsSet('companies',id,obj);
+  if(isDemo){const i=cache.companies.findIndex(c=>c.id===id);if(i>=0)cache.companies[i]=obj;else cache.companies.push(obj);}
+  bootstrap.Modal.getInstance(document.getElementById('company-modal')).hide();
+  renderCompanies();showToast('Empresa guardada');
+}
+function editCompany(id){
+  const c=cache.companies.find(x=>x.id===id);if(!c)return;
+  ['id','name','nit','address','city','contact','phone','email','activity'].forEach(f=>document.getElementById('company-'+f).value=c[f]||'');
+  new bootstrap.Modal(document.getElementById('company-modal')).show();
+}
+async function deleteCompany(id){
+  if(!confirm('¿Eliminar esta empresa?'))return;
+  await fsDel('companies',id);
+  if(isDemo)cache.companies=cache.companies.filter(c=>c.id!==id);
+  renderCompanies();showToast('Eliminada','danger');
+}
+function renderCompanies(){
+  const tbody=document.getElementById('companies-tbody');
+  if(!cache.companies.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><i class="fas fa-building"></i>Sin empresas</div></td></tr>`;return;}
+  tbody.innerHTML=cache.companies.map((c,i)=>`<tr>
+    <td>${i+1}</td><td><strong>${c.name}</strong></td><td>${c.nit}</td><td>${c.city||'—'}</td><td>${c.contact||'—'}</td><td>${c.phone||'—'}</td>
+    <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editCompany('${c.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteCompany('${c.id}')"><i class="fas fa-trash"></i></button></td>
+  </tr>`).join('');
+}
+
+// ════════════════════ ACTIVITIES ════════════════════
+function clearActivityForm(){document.getElementById('activity-id').value='';document.getElementById('activity-name').value='';document.getElementById('activity-desc').value='';document.getElementById('activity-duration').value='1';}
+async function saveActivity(){
+  const name=document.getElementById('activity-name').value.trim();
+  if(!name){alert('Nombre obligatorio');return;}
+  const id=document.getElementById('activity-id').value||uid();
+  const obj={id,name,category:document.getElementById('activity-category').value,desc:document.getElementById('activity-desc').value,duration:document.getElementById('activity-duration').value};
+  await fsSet('activities',id,obj);
+  if(isDemo){const i=cache.activities.findIndex(a=>a.id===id);if(i>=0)cache.activities[i]=obj;else cache.activities.push(obj);}
+  bootstrap.Modal.getInstance(document.getElementById('activity-modal')).hide();
+  renderActivities();showToast('Actividad guardada');
+}
+function editActivity(id){
+  const a=cache.activities.find(x=>x.id===id);if(!a)return;
+  document.getElementById('activity-id').value=a.id;document.getElementById('activity-name').value=a.name||'';
+  document.getElementById('activity-category').value=a.category||'Inspección de seguridad';
+  document.getElementById('activity-desc').value=a.desc||'';document.getElementById('activity-duration').value=a.duration||'1';
+  new bootstrap.Modal(document.getElementById('activity-modal')).show();
+}
+async function deleteActivity(id){
+  if(!confirm('¿Eliminar esta actividad?'))return;
+  await fsDel('activities',id);
+  if(isDemo)cache.activities=cache.activities.filter(a=>a.id!==id);
+  renderActivities();showToast('Eliminada','danger');
+}
+function renderActivities(){
+  const tbody=document.getElementById('activities-tbody');
+  if(!cache.activities.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><i class="fas fa-clipboard-list"></i>Sin actividades</div></td></tr>`;return;}
+  tbody.innerHTML=cache.activities.map((a,i)=>`<tr>
+    <td>${i+1}</td><td><strong>${a.name}</strong></td><td><span class="badge bg-secondary">${a.category}</span></td>
+    <td>${a.desc||'—'}</td><td>${a.duration||1}h</td>
+    <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editActivity('${a.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteActivity('${a.id}')"><i class="fas fa-trash"></i></button></td>
+  </tr>`).join('');
+}
+
+// ════════════════════ ADVISORS ════════════════════
+let editingSig=null;
+function clearAdvisorForm(){['advisor-id','advisor-name','advisor-cedula','advisor-phone','advisor-email','advisor-specialty'].forEach(id=>document.getElementById(id).value='');document.getElementById('advisor-level').value='Técnico SST';document.getElementById('advisor-signature-file').value='';document.getElementById('sig-preview-container').style.display='none';editingSig=null;}
+function previewSignature(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{editingSig=e.target.result;document.getElementById('sig-preview').src=editingSig;document.getElementById('sig-preview-container').style.display='block';};r.readAsDataURL(f);}
+function clearSignature(){editingSig=null;document.getElementById('advisor-signature-file').value='';document.getElementById('sig-preview-container').style.display='none';}
+async function saveAdvisor(){
+  const name=document.getElementById('advisor-name').value.trim();
+  const cedula=document.getElementById('advisor-cedula').value.trim();
+  if(!name||!cedula){alert('Nombre y cédula son obligatorios');return;}
+  const id=document.getElementById('advisor-id').value||uid();
+  if(!document.getElementById('advisor-id').value&&cache.advisors.find(a=>a.cedula===cedula)){alert('Ya existe un asesor con esa cédula');return;}
+  const existing=cache.advisors.find(a=>a.id===id);
+  const obj={id,name,cedula,phone:document.getElementById('advisor-phone').value,email:document.getElementById('advisor-email').value,level:document.getElementById('advisor-level').value,specialty:document.getElementById('advisor-specialty').value,signature:editingSig||(existing?existing.signature:null)};
+  await fsSet('advisors',id,obj);
+  if(isDemo){const i=cache.advisors.findIndex(a=>a.id===id);if(i>=0)cache.advisors[i]=obj;else cache.advisors.push(obj);}
+  bootstrap.Modal.getInstance(document.getElementById('advisor-modal')).hide();
+  renderAdvisors();showToast('Asesor guardado');
+}
+function editAdvisor(id){
+  const a=cache.advisors.find(x=>x.id===id);if(!a)return;
+  document.getElementById('advisor-id').value=a.id;document.getElementById('advisor-name').value=a.name||'';
+  document.getElementById('advisor-cedula').value=a.cedula||'';document.getElementById('advisor-phone').value=a.phone||'';
+  document.getElementById('advisor-email').value=a.email||'';document.getElementById('advisor-level').value=a.level||'Técnico SST';
+  document.getElementById('advisor-specialty').value=a.specialty||'';
+  editingSig=a.signature||null;
+  if(a.signature){document.getElementById('sig-preview').src=a.signature;document.getElementById('sig-preview-container').style.display='block';}
+  else document.getElementById('sig-preview-container').style.display='none';
+  new bootstrap.Modal(document.getElementById('advisor-modal')).show();
+}
+async function deleteAdvisor(id){
+  if(!confirm('¿Eliminar este asesor?'))return;
+  await fsDel('advisors',id);
+  if(isDemo)cache.advisors=cache.advisors.filter(a=>a.id!==id);
+  renderAdvisors();showToast('Eliminado','danger');
+}
+function renderAdvisors(){
+  const tbody=document.getElementById('advisors-tbody');
+  if(!cache.advisors.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><i class="fas fa-user-tie"></i>Sin asesores</div></td></tr>`;return;}
+  tbody.innerHTML=cache.advisors.map((a,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><div class="d-flex align-items-center gap-2"><div class="avatar">${a.name.charAt(0)}</div><strong>${a.name}</strong></div></td>
+    <td>${a.cedula}</td><td>${a.phone||'—'}</td>
+    <td><span class="badge bg-primary" style="font-size:10px;">${a.level||'—'}</span></td>
+    <td>${a.specialty||'—'}</td>
+    <td>${a.signature?`<img src="${a.signature}" style="max-height:34px;border:1px solid #dde;border-radius:4px;">`:'<span class="text-muted small">Sin firma</span>'}</td>
+    <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editAdvisor('${a.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteAdvisor('${a.id}')"><i class="fas fa-trash"></i></button></td>
+  </tr>`).join('');
+}
+
+// ════════════════════ ASSIGNMENTS ════════════════════
+function populateAssignmentSelects(){
+  document.getElementById('assignment-company').innerHTML=cache.companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('assignment-activity').innerHTML=cache.activities.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  document.getElementById('assignment-advisor').innerHTML=cache.advisors.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+function clearAssignmentForm(){document.getElementById('assignment-id').value='';document.getElementById('assignment-date').value=isoDate(new Date());document.getElementById('assignment-time').value='08:00';document.getElementById('assignment-status').value='programado';document.getElementById('assignment-notes').value='';}
+async function saveAssignment(){
+  const companyId=document.getElementById('assignment-company').value;
+  const activityId=document.getElementById('assignment-activity').value;
+  const advisorId=document.getElementById('assignment-advisor').value;
+  const date=document.getElementById('assignment-date').value;
+  if(!companyId||!activityId||!advisorId||!date){alert('Empresa, actividad, asesor y fecha son obligatorios');return;}
+  const id=document.getElementById('assignment-id').value||uid();
+  const obj={id,companyId,activityId,advisorId,date,time:document.getElementById('assignment-time').value,status:document.getElementById('assignment-status').value,notes:document.getElementById('assignment-notes').value};
+  await fsSet('assignments',id,obj);
+  if(isDemo){const i=cache.assignments.findIndex(a=>a.id===id);if(i>=0)cache.assignments[i]=obj;else cache.assignments.push(obj);}
+  bootstrap.Modal.getInstance(document.getElementById('assignment-modal')).hide();
+  renderAssignments();renderDashboard();showToast('Asignación guardada');
+}
+function editAssignment(id){
+  const a=cache.assignments.find(x=>x.id===id);if(!a)return;
+  populateAssignmentSelects();
+  document.getElementById('assignment-id').value=a.id;document.getElementById('assignment-company').value=a.companyId;
+  document.getElementById('assignment-activity').value=a.activityId;document.getElementById('assignment-advisor').value=a.advisorId;
+  document.getElementById('assignment-date').value=a.date;document.getElementById('assignment-time').value=a.time||'08:00';
+  document.getElementById('assignment-status').value=a.status||'programado';document.getElementById('assignment-notes').value=a.notes||'';
+  new bootstrap.Modal(document.getElementById('assignment-modal')).show();
+}
+async function deleteAssignment(id){
+  if(!confirm('¿Eliminar esta asignación?'))return;
+  await fsDel('assignments',id);
+  if(isDemo)cache.assignments=cache.assignments.filter(a=>a.id!==id);
+  renderAssignments();renderDashboard();showToast('Eliminada','danger');
+}
+function populateFilterSelects(){
+  const fc=document.getElementById('filter-company');const fa=document.getElementById('filter-advisor');
+  const cc=fc.value;const ca=fa.value;
+  fc.innerHTML='<option value="">Todas las empresas</option>'+cache.companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  fa.innerHTML='<option value="">Todos los asesores</option>'+cache.advisors.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  fc.value=cc;fa.value=ca;
+}
+function renderAssignments(){
+  let asns=[...cache.assignments];
+  const fc=document.getElementById('filter-company').value;
+  const fa=document.getElementById('filter-advisor').value;
+  const fm=document.getElementById('filter-month').value;
+  const fs=document.getElementById('filter-status').value;
+  if(fc)asns=asns.filter(a=>a.companyId===fc);
+  if(fa)asns=asns.filter(a=>a.advisorId===fa);
+  if(fm)asns=asns.filter(a=>a.date&&a.date.startsWith(fm));
+  if(fs)asns=asns.filter(a=>a.status===fs);
+  asns.sort((a,b)=>b.date>a.date?1:-1);
+  const tbody=document.getElementById('assignments-tbody');
+  if(!asns.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><i class="fas fa-calendar-times"></i>Sin asignaciones</div></td></tr>`;return;}
+  tbody.innerHTML=asns.map(a=>{
+    const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
+    const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
+    const ad=cache.advisors.find(x=>x.id===a.advisorId)||{name:'—'};
+    return`<tr><td>${fmtDate(a.date)}</td><td>${a.time||'—'}</td><td>${co.name}</td><td>${ac.name}</td><td>${ad.name}</td>
+      <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td>
+      <td><small>${a.notes||'—'}</small></td>
+      <td><button class="btn btn-sm btn-outline-success me-1" onclick="openStatusModal('${a.id}')"><i class="fas fa-check"></i></button>
+          <button class="btn btn-sm btn-outline-primary me-1" onclick="editAssignment('${a.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignment('${a.id}')"><i class="fas fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════ STATUS UPDATE ════════════════════
+function openStatusModal(id){
+  const a=cache.assignments.find(x=>x.id===id);if(!a)return;
+  document.getElementById('status-assignment-id').value=id;
+  document.getElementById('status-value').value=a.status||'programado';
+  document.getElementById('status-notes').value=a.notes||'';
+  new bootstrap.Modal(document.getElementById('status-modal')).show();
+}
+async function updateStatus(){
+  const id=document.getElementById('status-assignment-id').value;
+  const status=document.getElementById('status-value').value;
+  const notes=document.getElementById('status-notes').value;
+  const idx=cache.assignments.findIndex(a=>a.id===id);
+  if(idx<0)return;
+  cache.assignments[idx]={...cache.assignments[idx],status,notes};
+  await fsSet('assignments',id,cache.assignments[idx]);
+  bootstrap.Modal.getInstance(document.getElementById('status-modal')).hide();
+  renderAssignments();renderCompliance();renderDashboard();renderPortalActivities();
+  showToast('Estado actualizado');
+}
+
+// ════════════════════ DASHBOARD ════════════════════
+function changeWeek(dir){currentWeekStart=addDays(currentWeekStart,dir*7);renderDashboard();}
+function goToday(){currentWeekStart=getMonday(new Date());renderDashboard();}
+function renderDashboard(){
+  const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const today=isoDate(new Date());
+  const weekEnd=addDays(currentWeekStart,6);
+  const start=isoDate(currentWeekStart);const end=isoDate(weekEnd);
+  document.getElementById('week-label').textContent=`${currentWeekStart.toLocaleDateString('es-CO',{day:'2-digit',month:'short'})} – ${weekEnd.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})}`;
+  const weekAsns=cache.assignments.filter(a=>a.date>=start&&a.date<=end);
+  document.getElementById('stats-row').innerHTML=[
+    {l:'Esta semana',v:weekAsns.length,i:'calendar-week',c:'#1a3a8f'},
+    {l:'Programadas',v:weekAsns.filter(a=>a.status==='programado').length,i:'clock',c:'#2d5be3'},
+    {l:'Cumplidas',v:weekAsns.filter(a=>a.status==='cumplido').length,i:'check-circle',c:'#5cb800'},
+    {l:'No Cumplidas',v:weekAsns.filter(a=>a.status==='no_cumplido').length,i:'times-circle',c:'#dc3545'}
+  ].map(s=>`<div class="col-md-3 col-6"><div class="stat-card" style="background:${s.c};"><i class="fas fa-${s.i} icon"></i><h3>${s.v}</h3><p>${s.l}</p></div></div>`).join('');
+  const grid=document.getElementById('week-grid');grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=addDays(currentWeekStart,i);const ds=isoDate(d);
+    const dayAsns=cache.assignments.filter(a=>a.date===ds).sort((a,b)=>(a.time||'')>(b.time||'')?1:-1);
+    const col=document.createElement('div');col.className='day-col'+(ds===today?' today':'');
+    col.innerHTML=`<div class="day-name">${days[i]}</div><div class="day-num">${d.getDate()}</div>`;
+    if(!dayAsns.length){col.innerHTML+=`<div style="text-align:center;color:#ccc;font-size:11px;padding:8px 0;">Sin actividades</div>`;}
+    dayAsns.forEach(a=>{
+      const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
+      const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
+      const pill=document.createElement('div');
+      pill.className=`act-pill ${a.status||'programado'}`;
+      pill.title=`${ac.name} · ${co.name} · ${a.time||''} · ${statusLabel(a.status)}`;
+      pill.innerHTML=`<div class="pill-company">${a.time||''} ${co.name}</div><div class="pill-advisor">${ac.name}</div>`;
+      pill.onclick=()=>openStatusModal(a.id);
+      col.appendChild(pill);
+    });
+    grid.appendChild(col);
+  }
+}
+
+// ════════════════════ COMPLIANCE ════════════════════
+function getWeekNumber(d){const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=date.getUTCDay()||7;date.setUTCDate(date.getUTCDate()+4-day);const y=new Date(Date.UTC(date.getUTCFullYear(),0,1));return Math.ceil((((date-y)/86400000)+1)/7);}
+function getWeekDates(ws){const[y,w]=ws.split('-W');const j=new Date(parseInt(y),0,4);const m=new Date(j);m.setDate(j.getDate()-(j.getDay()||7)+1+(parseInt(w)-1)*7);return{start:isoDate(m),end:isoDate(addDays(m,6))};}
+function populateComplianceSelects(){
+  const ca=document.getElementById('compliance-advisor');const cur=ca.value;
+  ca.innerHTML='<option value="">Todos los asesores</option>'+cache.advisors.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  ca.value=cur;
+  if(!document.getElementById('compliance-week').value){const d=new Date();document.getElementById('compliance-week').value=`${d.getFullYear()}-W${String(getWeekNumber(d)).padStart(2,'0')}`;}
+}
+function renderCompliance(){
+  const wv=document.getElementById('compliance-week').value;const af=document.getElementById('compliance-advisor').value;
+  if(!wv){document.getElementById('compliance-list').innerHTML='<div class="empty-state"><i class="fas fa-calendar"></i>Selecciona una semana</div>';return;}
+  const{start,end}=getWeekDates(wv);
+  let asns=cache.assignments.filter(a=>a.date>=start&&a.date<=end);
+  if(af)asns=asns.filter(a=>a.advisorId===af);
+  asns.sort((a,b)=>a.date>b.date?1:-1);
+  if(!asns.length){document.getElementById('compliance-list').innerHTML='<div class="empty-state"><i class="fas fa-check-circle"></i>Sin actividades esta semana</div>';return;}
+  const total=asns.length;const cumplidas=asns.filter(a=>a.status==='cumplido').length;
+  const pct=total?Math.round(cumplidas/total*100):0;
+  document.getElementById('compliance-list').innerHTML=`
+    <div class="card mb-3"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span><strong>Cumplimiento:</strong> ${cumplidas}/${total}</span>
+        <span class="badge ${pct>=80?'bg-success':pct>=50?'bg-warning text-dark':'bg-danger'} fs-6">${pct}%</span>
+      </div>
+      <div class="progress" style="height:10px;"><div class="progress-bar ${pct>=80?'bg-success':pct>=50?'bg-warning':'bg-danger'}" style="width:${pct}%"></div></div>
+    </div></div>
+    <div class="card"><div class="card-body p-0">
+      <table class="table mb-0"><thead><tr><th>Fecha</th><th>Hora</th><th>Empresa</th><th>Actividad</th><th>Asesor</th><th>Estado</th><th>Observaciones</th><th></th></tr></thead>
+      <tbody>${asns.map(a=>{
+        const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
+        const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
+        const ad=cache.advisors.find(x=>x.id===a.advisorId)||{name:'—'};
+        return`<tr><td>${fmtDate(a.date)}</td><td>${a.time||'—'}</td><td>${co.name}</td><td>${ac.name}</td><td>${ad.name}</td>
+          <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td>
+          <td><small>${a.notes||'—'}</small></td>
+          <td><button class="btn btn-sm btn-outline-success" onclick="openStatusModal('${a.id}')"><i class="fas fa-edit"></i></button></td></tr>`;
+      }).join('')}</tbody></table>
+    </div></div>`;
+}
+
+// ════════════════════ REPORTS ════════════════════
+function populateReportSelects(){
+  const rc=document.getElementById('report-company');const cur=rc.value;
+  rc.innerHTML='<option value="">Todas las empresas</option>'+cache.companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  rc.value=cur;
+  if(!document.getElementById('report-month').value){const n=new Date();document.getElementById('report-month').value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;}
+}
+function renderReportPreview(){
+  const cid=document.getElementById('report-company').value;
+  const month=document.getElementById('report-month').value;
+  if(!month){document.getElementById('report-preview').innerHTML='<div class="empty-state"><i class="fas fa-file-alt"></i>Selecciona empresa y mes</div>';return;}
+  let asns=cache.assignments.filter(a=>a.date&&a.date.startsWith(month));
+  if(cid)asns=asns.filter(a=>a.companyId===cid);
+  asns.sort((a,b)=>a.date>b.date?1:-1);
+  const cname=cid?(cache.companies.find(c=>c.id===cid)||{name:'Todas'}).name:'Todas las empresas';
+  const total=asns.length;const cumplidas=asns.filter(a=>a.status==='cumplido').length;
+  if(!asns.length){document.getElementById('report-preview').innerHTML='<div class="empty-state"><i class="fas fa-folder-open"></i>Sin actividades en este período</div>';return;}
+  document.getElementById('report-preview').innerHTML=`
+    <h5>${cname} · ${fmtMonthYear(month)}</h5>
+    <p class="text-muted">Total: <strong>${total}</strong> | Cumplidas: <strong>${cumplidas}</strong> | Cumplimiento: <strong>${total?Math.round(cumplidas/total*100):0}%</strong></p>
+    <table class="table table-sm table-bordered">
+      <thead style="background:var(--blue);color:#fff;"><tr><th>Fecha</th><th>Empresa</th><th>Actividad</th><th>Asesor</th><th>Estado</th><th>Observaciones</th></tr></thead>
+      <tbody>${asns.map(a=>{
+        const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
+        const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
+        const ad=cache.advisors.find(x=>x.id===a.advisorId)||{name:'—'};
+        return`<tr><td>${fmtDate(a.date)}</td><td>${co.name}</td><td>${ac.name}</td><td>${ad.name}</td>
+          <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td><td>${a.notes||'—'}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('report-company').addEventListener('change',renderReportPreview);
+  document.getElementById('report-month').addEventListener('change',renderReportPreview);
+});
+
+// ════════════════════ PDF ════════════════════
+async function generatePDF(){
+  const cid=document.getElementById('report-company').value;
+  const month=document.getElementById('report-month').value;
+  if(!month){alert('Selecciona un mes');return;}
+  let asns=cache.assignments.filter(a=>a.date&&a.date.startsWith(month));
+  if(cid)asns=asns.filter(a=>a.companyId===cid);
+  asns.sort((a,b)=>a.date>b.date?1:-1);
+  const cname=cid?(cache.companies.find(c=>c.id===cid)||{name:'Todas'}).name:'Todas las empresas';
+  const org=await fsGetSettings();
+  const logo=cache.logo;
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=297;const H=210;
+  doc.setFillColor(26,58,143);doc.rect(0,0,W,28,'F');
+  doc.setFillColor(92,184,0);doc.rect(0,28,W,3,'F');
+  if(logo){try{doc.addImage(logo,'PNG',8,3,40,22);}catch(e){}}
+  const tx=logo?54:10;
+  doc.setFontSize(13);doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');
+  doc.text(org.name||'EduFlex Game Consulting SAS',tx,11);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  if(org.nit)doc.text('NIT: '+org.nit,tx,17);
+  if(org.address)doc.text(org.address,tx,22);
+  if(org.phone)doc.text('Tel: '+org.phone,tx,27);
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('INFORME DE ACTIVIDADES SST',W-8,10,{align:'right'});
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text(cname,W-8,16,{align:'right'});doc.text(fmtMonthYear(month),W-8,22,{align:'right'});
+  const total=asns.length;const cumplidas=asns.filter(a=>a.status==='cumplido').length;
+  const noCum=asns.filter(a=>a.status==='no_cumplido').length;const repr=asns.filter(a=>a.status==='reprogramado').length;
+  const pct=total?Math.round(cumplidas/total*100):0;
+  doc.setTextColor(50,50,50);doc.setFontSize(10);doc.setFont('helvetica','bold');doc.text('Resumen Ejecutivo',10,40);
+  doc.setFillColor(240,244,255);doc.roundedRect(8,42,W-16,14,2,2,'F');
+  doc.setFont('helvetica','normal');doc.setFontSize(9);
+  doc.text(`Total: ${total}`,14,50);doc.text(`Cumplidas: ${cumplidas}`,60,50);doc.text(`No Cumplidas: ${noCum}`,110,50);doc.text(`Reprogramadas: ${repr}`,160,50);
+  doc.setFont('helvetica','bold');doc.setTextColor(pct>=80?0:180,pct>=80?120:pct>=50?90:0,0);doc.text(`Cumplimiento: ${pct}%`,210,50);
+  doc.autoTable({
+    head:[['Fecha','Hora','Empresa','Actividad','Asesor','Estado','Observaciones']],
+    body:asns.map(a=>{
+      const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
+      const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
+      const ad=cache.advisors.find(x=>x.id===a.advisorId)||{name:'—'};
+      return[fmtDate(a.date),a.time||'—',co.name,ac.name,ad.name,statusLabel(a.status),a.notes||'—'];
+    }),
+    startY:60,theme:'grid',
+    styles:{fontSize:8,cellPadding:2,textColor:[50,50,50]},
+    headStyles:{fillColor:[26,58,143],textColor:[255,255,255],fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[246,248,255]},
+    columnStyles:{0:{cellWidth:24},1:{cellWidth:14},2:{cellWidth:42},3:{cellWidth:42},4:{cellWidth:36},5:{cellWidth:26},6:{cellWidth:'auto'}},
+    willDrawCell:data=>{if(data.section==='body'&&data.column.index===5){const s=asns[data.row.index]?.status;if(s==='cumplido'){data.cell.styles.textColor=[0,100,0];data.cell.styles.fontStyle='bold';}else if(s==='no_cumplido'){data.cell.styles.textColor=[160,0,0];data.cell.styles.fontStyle='bold';}}},
+    margin:{left:10,right:10}
+  });
+  const sigY=doc.lastAutoTable.finalY+8;
+  const uids=[...new Set(asns.map(a=>a.advisorId))];
+  const rads=uids.map(id=>cache.advisors.find(a=>a.id===id)).filter(Boolean);
+  if(rads.length&&sigY<H-35){
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(26,58,143);doc.text('Firmas:',10,sigY+4);
+    let sx=10;
+    rads.forEach(ad=>{if(sx+55>W-10)return;doc.setDrawColor(200,200,200);doc.rect(sx,sigY+8,50,20);if(ad.signature){try{doc.addImage(ad.signature,'JPEG',sx+1,sigY+9,48,14);}catch(e){}}doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(50,50,50);doc.text(ad.name,sx+25,sigY+30,{align:'center'});doc.text(ad.specialty||ad.level||'Asesor SST',sx+25,sigY+34,{align:'center'});sx+=58;});
+  }
+  const pages=doc.getNumberOfPages();
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFillColor(26,58,143);doc.rect(0,H-7,W,7,'F');doc.setFontSize(7);doc.setTextColor(255,255,255);doc.setFont('helvetica','normal');doc.text(`Generado: ${new Date().toLocaleDateString('es-CO')}`,10,H-2);doc.text(`Pág ${i}/${pages}`,W/2,H-2,{align:'center'});doc.text('EduFlex SST',W-10,H-2,{align:'right'});}
+  doc.save(`InformeSST_${cname.replace(/\s+/g,'_')}_${month}.pdf`);
+  showToast('PDF generado');
+}
+
+// ════════════════════ PORTAL ════════════════════
+let currentPortalAdvisor=null;
+function openPortal(){document.getElementById('portal-overlay').classList.add('show');setTimeout(()=>document.getElementById('portal-cedula').focus(),200);}
+function closePortal(){document.getElementById('portal-overlay').classList.remove('show');document.getElementById('portal-error').classList.add('d-none');document.getElementById('portal-cedula').value='';}
+function portalLogin(){
+  const cedula=document.getElementById('portal-cedula').value.trim();
+  const advisor=cache.advisors.find(a=>a.cedula===cedula);
+  if(!advisor){document.getElementById('portal-error').classList.remove('d-none');return;}
+  currentPortalAdvisor=advisor;closePortal();openPortalView();
+}
+function openPortalView(){
+  document.getElementById('portal-view').style.display='block';
+  document.getElementById('portal-welcome').textContent=`Bienvenido/a, ${currentPortalAdvisor.name} · Cédula: ${currentPortalAdvisor.cedula}`;
+  const logo=cache.logo;
+  document.getElementById('portal-view-logo').src=logo||'';
+  const n=new Date();document.getElementById('portal-month').value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+  renderPortalActivities();
+}
+function exitPortal(){document.getElementById('portal-view').style.display='none';currentPortalAdvisor=null;}
+function renderPortalActivities(){
+  if(!currentPortalAdvisor)return;
+  const month=document.getElementById('portal-month').value;
+  let asns=cache.assignments.filter(a=>a.advisorId===currentPortalAdvisor.id);
+  if(month)asns=asns.filter(a=>a.date&&a.date.startsWith(month));
+  asns.sort((a,b)=>a.date>b.date?1:-1);
+  const total=asns.length;const cum=asns.filter(a=>a.status==='cumplido').length;
+  document.getElementById('portal-stats').innerHTML=[
+    {l:'Asignadas',v:total,c:'#1a3a8f',i:'calendar'},{l:'Programadas',v:asns.filter(a=>a.status==='programado').length,c:'#2d5be3',i:'clock'},
+    {l:'Cumplidas',v:cum,c:'#5cb800',i:'check-circle'},{l:'No Cumplidas',v:asns.filter(a=>a.status==='no_cumplido').length,c:'#dc3545',i:'times-circle'}
+  ].map(s=>`<div class="col-6 col-md-3"><div class="stat-card" style="background:${s.c};"><i class="fas fa-${s.i} icon"></i><h3>${s.v}</h3><p>${s.l}</p></div></div>`).join('');
+  const tbody=document.getElementById('portal-tbody');
+  if(!asns.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><i class="fas fa-calendar-times"></i>Sin actividades en este período</div></td></tr>`;return;}
+  tbody.innerHTML=asns.map(a=>{
+    const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
+    const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
+    return`<tr><td>${fmtDate(a.date)}</td><td>${a.time||'—'}</td><td>${co.name}</td><td>${ac.name}</td>
+      <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td>
+      <td><small>${a.notes||'—'}</small></td>
+      <td><button class="btn btn-sm btn-outline-success" onclick="portalUpdateStatus('${a.id}')"><i class="fas fa-edit me-1"></i>Actualizar</button></td></tr>`;
+  }).join('');
+}
+function portalUpdateStatus(id){
+  const a=cache.assignments.find(x=>x.id===id);if(!a)return;
+  document.getElementById('status-assignment-id').value=id;
+  document.getElementById('status-value').value=a.status||'programado';
+  document.getElementById('status-notes').value=a.notes||'';
+  new bootstrap.Modal(document.getElementById('status-modal')).show();
+}
+
+// ════════════════════ INIT ════════════════════
+async function init(){
+  document.getElementById('loading-msg').textContent=isDemo?'Cargando en modo demo…':'Conectando con Firebase…';
+  if(isDemo) document.getElementById('config-banner').style.display='block';
+  try{
+    await loadAllCache();
+    if(!isDemo) initRealtimeListeners();
+    document.getElementById('loading-screen').classList.add('hide');
+    setTimeout(()=>document.getElementById('loading-screen').remove(),600);
+    showPage('dashboard');
+  }catch(err){
+    document.getElementById('loading-msg').textContent='Error al conectar. Verifica tu configuración de Firebase.';
+    console.error(err);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
