@@ -504,7 +504,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f0f2f7;color:#222;}
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
 // ════════════════════════════════════════════════════════
@@ -521,23 +520,43 @@ const firebaseConfig = {
   appId:             "1:966849899468:web:a2e4526a3afda247a18b69"
 };
 // ════════════════════════════════════════════════════════
+//  🔧 ID DE TU BASE DE DATOS FIRESTORE
+//     Si creaste una base con nombre propio cámbialo aquí.
+//     Lo encuentras en la URL de Firestore:
+//     .../firestore/databases/NOMBRE/data
+// ════════════════════════════════════════════════════════
+const FIRESTORE_DB_ID = "eduprogram";
+// ════════════════════════════════════════════════════════
 
 // ── Detectar si la config es la de ejemplo
 const isDemo = firebaseConfig.apiKey === "TU-API-KEY";
 
-// ── Init Firebase
-if(!isDemo){
-  firebase.initializeApp(firebaseConfig);
-}
+// ── Variables globales de Firestore (modular SDK)
+let db = null;
+let _fs = {};
 
-// ── Firestore reference
-const db = isDemo ? null : firebase.firestore();
+// ── Función de inicialización Firebase (async, soporta bases con nombre)
+async function initFirebase(){
+  if(isDemo) return;
+  firebase.initializeApp(firebaseConfig);
+  // Importar Firestore modular para soportar bases de datos con nombre
+  const mod = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+  db = mod.getFirestore(firebase.app(), FIRESTORE_DB_ID);
+  _fs = {
+    collection: mod.collection,
+    getDocs:    mod.getDocs,
+    doc:        mod.doc,
+    setDoc:     mod.setDoc,
+    deleteDoc:  mod.deleteDoc,
+    getDoc:     mod.getDoc,
+    onSnapshot: mod.onSnapshot
+  };
+}
 
 // ── Cache local (actualizado por listeners en tiempo real)
 const cache = { companies:[], activities:[], advisors:[], assignments:[], settings:{}, logo:'' };
 
 // ════════════════════ CAPA DE DATOS ════════════════════
-// Si Firebase no está configurado, cae en localStorage como respaldo
 const LS = {
   get(k){try{return JSON.parse(localStorage.getItem('ef_'+k)||'[]');}catch{return[];}},
   set(k,v){localStorage.setItem('ef_'+k,JSON.stringify(v));},
@@ -545,34 +564,41 @@ const LS = {
   setStr(k,v){localStorage.setItem('ef_'+k,v);}
 };
 
-async function fsGet(col){ if(isDemo) return LS.get(col); const snap=await db.collection(col).get(); return snap.docs.map(d=>({id:d.id,...d.data()}));}
-async function fsSet(col,id,data){ if(isDemo){const arr=LS.get(col);const i=arr.findIndex(x=>x.id===id);if(i>=0)arr[i]=data;else arr.push(data);LS.set(col,arr);return;} await db.collection(col).doc(id).set(data);}
-async function fsDel(col,id){ if(isDemo){LS.set(col,LS.get(col).filter(x=>x.id!==id));return;} await db.collection(col).doc(id).delete();}
-async function fsGetDoc(col,id){ if(isDemo){const arr=LS.get(col);return arr.find(x=>x.id===id)||null;} const d=await db.collection(col).doc(id).get(); return d.exists?{id:d.id,...d.data()}:null;}
-async function fsSetDoc(col,id,data){ if(isDemo){LS.setStr(col+'_'+id,JSON.stringify(data));return;} await db.collection(col).doc(id).set(data,{merge:true});}
-async function fsGetSettings(){ if(isDemo){return JSON.parse(localStorage.getItem('ef_org')||'{}');} const d=await db.collection('settings').doc('org').get(); return d.exists?d.data():{};}
+async function fsGet(col){
+  if(isDemo) return LS.get(col);
+  const snap=await _fs.getDocs(_fs.collection(db,col));
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+async function fsSet(col,id,data){
+  if(isDemo){const arr=LS.get(col);const i=arr.findIndex(x=>x.id===id);if(i>=0)arr[i]=data;else arr.push(data);LS.set(col,arr);return;}
+  await _fs.setDoc(_fs.doc(db,col,id),data);
+}
+async function fsDel(col,id){
+  if(isDemo){LS.set(col,LS.get(col).filter(x=>x.id!==id));return;}
+  await _fs.deleteDoc(_fs.doc(db,col,id));
+}
+async function fsGetDoc(col,id){
+  if(isDemo){return LS.get(col).find(x=>x.id===id)||null;}
+  const d=await _fs.getDoc(_fs.doc(db,col,id));
+  return d.exists()?{id:d.id,...d.data()}:null;
+}
+async function fsGetSettings(){
+  if(isDemo){return JSON.parse(localStorage.getItem('ef_org')||'{}');}
+  const d=await _fs.getDoc(_fs.doc(db,'settings','org'));
+  return d.exists()?d.data():{};
+}
 
 // ════════════════════ LISTENERS TIEMPO REAL ════════════════════
 function initRealtimeListeners(){
-  if(isDemo) return; // sin listeners en modo demo
-  db.collection('companies').onSnapshot(snap=>{
-    cache.companies=snap.docs.map(d=>({id:d.id,...d.data()}));
-    refreshCurrentPage();
+  if(isDemo) return;
+  ['companies','activities','advisors','assignments'].forEach(col=>{
+    _fs.onSnapshot(_fs.collection(db,col),snap=>{
+      cache[col]=snap.docs.map(d=>({id:d.id,...d.data()}));
+      refreshCurrentPage();
+    });
   });
-  db.collection('activities').onSnapshot(snap=>{
-    cache.activities=snap.docs.map(d=>({id:d.id,...d.data()}));
-    refreshCurrentPage();
-  });
-  db.collection('advisors').onSnapshot(snap=>{
-    cache.advisors=snap.docs.map(d=>({id:d.id,...d.data()}));
-    refreshCurrentPage();
-  });
-  db.collection('assignments').onSnapshot(snap=>{
-    cache.assignments=snap.docs.map(d=>({id:d.id,...d.data()}));
-    refreshCurrentPage();
-  });
-  db.collection('settings').doc('app').onSnapshot(snap=>{
-    if(snap.exists){
+  _fs.onSnapshot(_fs.doc(db,'settings','app'),snap=>{
+    if(snap.exists()){
       const d=snap.data();
       if(d.logo){cache.logo=d.logo;applyLogo(d.logo);}
     }
@@ -669,7 +695,7 @@ function uploadLogo(input){
   const r=new FileReader();
   r.onload=async e=>{
     const src=e.target.result;
-    if(!isDemo){ await db.collection('settings').doc('app').set({logo:src},{merge:true}); }
+    if(!isDemo){ await _fs.setDoc(_fs.doc(db,'settings','app'),{logo:src},{merge:true}); }
     else{ LS.setStr('logo',src); }
     cache.logo=src;applyLogo(src);
     document.getElementById('logo-preview-img').src=src;document.getElementById('logo-preview-wrap').style.display='block';
@@ -677,7 +703,7 @@ function uploadLogo(input){
   };r.readAsDataURL(f);
 }
 function removeLogo(){
-  if(!isDemo){ db.collection('settings').doc('app').set({logo:''},{merge:true}); }
+  if(!isDemo){ _fs.setDoc(_fs.doc(db,'settings','app'),{logo:''},{merge:true}); }
   else{ localStorage.removeItem('ef_logo'); }
   cache.logo='';applyLogo('');
   document.getElementById('logo-preview-wrap').style.display='none';
@@ -699,7 +725,7 @@ async function loadSettings(){
 async function saveOrgSettings(){
   const org={name:document.getElementById('org-name').value,nit:document.getElementById('org-nit').value,
     address:document.getElementById('org-address').value,phone:document.getElementById('org-phone').value};
-  if(!isDemo){ await db.collection('settings').doc('org').set(org,{merge:true}); }
+  if(!isDemo){ await _fs.setDoc(_fs.doc(db,'settings','org'),org,{merge:true}); }
   else{ localStorage.setItem('ef_org',JSON.stringify(org)); }
   showToast('Configuración guardada');
 }
@@ -1146,6 +1172,7 @@ async function init(){
   document.getElementById('loading-msg').textContent=isDemo?'Cargando en modo demo…':'Conectando con Firebase…';
   if(isDemo) document.getElementById('config-banner').style.display='block';
   try{
+    await initFirebase();
     await loadAllCache();
     if(!isDemo) initRealtimeListeners();
     document.getElementById('loading-screen').classList.add('hide');
