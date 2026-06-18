@@ -399,7 +399,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f0f2f7;color:#222;}
   </div>
 </div></div></div>
 <!-- Status Update -->
-<div class="modal fade" id="status-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+<div class="modal fade" id="status-modal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
   <div class="modal-header" style="background:var(--green);color:#fff;">
     <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Actualizar Estado</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -412,7 +412,14 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f0f2f7;color:#222;}
         <option value="no_cumplido">No Cumplido</option><option value="reprogramado">Reprogramado</option>
       </select>
     </div>
-    <div class="mb-3"><label class="form-label">Observaciones</label><textarea class="form-control" id="status-notes" rows="3"></textarea></div>
+    <div class="mb-3">
+      <label class="form-label"><i class="fas fa-clipboard-check me-1 text-success"></i>Observaciones de desarrollo <small class="text-muted fw-normal">(visibles en el informe PDF)</small></label>
+      <textarea class="form-control" id="status-observations" rows="4" placeholder="Describa las actividades realizadas, hallazgos, compromisos adquiridos, personal participante, etc."></textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label"><i class="fas fa-sticky-note me-1 text-warning"></i>Notas internas <small class="text-muted fw-normal">(solo uso administrativo)</small></label>
+      <textarea class="form-control" id="status-notes" rows="2" placeholder="Notas internas o seguimiento administrativo..."></textarea>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -450,7 +457,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f0f2f7;color:#222;}
         <input type="month" class="form-control form-control-sm w-auto" id="portal-month" onchange="renderPortalActivities()">
       </div>
       <div class="card-body p-0">
-        <table class="table mb-0"><thead><tr><th>Fecha</th><th>Hora</th><th>Empresa</th><th>Actividad</th><th>Estado</th><th>Observaciones</th><th>Acción</th></tr></thead>
+        <table class="table mb-0"><thead><tr><th>Fecha</th><th>Hora</th><th>Empresa</th><th>Actividad</th><th>Estado</th><th><i class="fas fa-clipboard-check me-1"></i>Observaciones de desarrollo</th><th>Acción</th></tr></thead>
         <tbody id="portal-tbody"></tbody></table>
       </div>
     </div>
@@ -467,8 +474,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f0f2f7;color:#222;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<!-- Firebase SDK — solo app-compat, Firestore se importa en modo modular -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script>
 // ════════════════════════════════════════════════════════
 //  🔧 CONFIGURACIÓN FIREBASE — Reemplaza con tus valores
@@ -492,20 +497,21 @@ const isDemo = firebaseConfig.apiKey === "TU-API-KEY";
 let db = null;
 let _fs = {};
 
-// Inicializa Firebase con SDK modular de Firestore (soporta bases con nombre)
+// Inicializa Firebase — 100% SDK modular (soporta bases con nombre)
 async function initFirebase(){
   if(isDemo) return;
-  firebase.initializeApp(firebaseConfig);
-  const mod = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-  db = mod.getFirestore(firebase.app(), FIRESTORE_DB_ID);
+  const appMod = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+  const fsMod  = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+  const app = appMod.initializeApp(firebaseConfig);
+  db = fsMod.getFirestore(app, FIRESTORE_DB_ID);
   _fs = {
-    collection: mod.collection,
-    getDocs:    mod.getDocs,
-    doc:        mod.doc,
-    setDoc:     mod.setDoc,
-    deleteDoc:  mod.deleteDoc,
-    getDoc:     mod.getDoc,
-    onSnapshot: mod.onSnapshot
+    collection: fsMod.collection,
+    getDocs:    fsMod.getDocs,
+    doc:        fsMod.doc,
+    setDoc:     fsMod.setDoc,
+    deleteDoc:  fsMod.deleteDoc,
+    getDoc:     fsMod.getDoc,
+    onSnapshot: fsMod.onSnapshot
   };
 }
 
@@ -871,16 +877,18 @@ function openStatusModal(id){
   const a=cache.assignments.find(x=>x.id===id);if(!a)return;
   document.getElementById('status-assignment-id').value=id;
   document.getElementById('status-value').value=a.status||'programado';
+  document.getElementById('status-observations').value=a.observations||'';
   document.getElementById('status-notes').value=a.notes||'';
   new bootstrap.Modal(document.getElementById('status-modal')).show();
 }
 async function updateStatus(){
   const id=document.getElementById('status-assignment-id').value;
   const status=document.getElementById('status-value').value;
+  const observations=document.getElementById('status-observations').value;
   const notes=document.getElementById('status-notes').value;
   const idx=cache.assignments.findIndex(a=>a.id===id);
   if(idx<0)return;
-  cache.assignments[idx]={...cache.assignments[idx],status,notes};
+  cache.assignments[idx]={...cache.assignments[idx],status,observations,notes};
   await fsSet('assignments',id,cache.assignments[idx]);
   bootstrap.Modal.getInstance(document.getElementById('status-modal')).hide();
   renderAssignments();renderCompliance();renderDashboard();renderPortalActivities();
@@ -986,13 +994,15 @@ function renderReportPreview(){
     <h5>${cname} · ${fmtMonthYear(month)}</h5>
     <p class="text-muted">Total: <strong>${total}</strong> | Cumplidas: <strong>${cumplidas}</strong> | Cumplimiento: <strong>${total?Math.round(cumplidas/total*100):0}%</strong></p>
     <table class="table table-sm table-bordered">
-      <thead style="background:var(--blue);color:#fff;"><tr><th>Fecha</th><th>Empresa</th><th>Actividad</th><th>Asesor</th><th>Estado</th><th>Observaciones</th></tr></thead>
+      <thead style="background:var(--blue);color:#fff;"><tr><th>Fecha</th><th>Empresa</th><th>Actividad</th><th>Asesor</th><th>Estado</th><th>Observaciones de desarrollo</th><th>Notas</th></tr></thead>
       <tbody>${asns.map(a=>{
         const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
         const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
         const ad=cache.advisors.find(x=>x.id===a.advisorId)||{name:'—'};
         return`<tr><td>${fmtDate(a.date)}</td><td>${co.name}</td><td>${ac.name}</td><td>${ad.name}</td>
-          <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td><td>${a.notes||'—'}</td></tr>`;
+          <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td>
+          <td style="font-size:12px;">${a.observations?`<span style="color:#2a6800;">${a.observations}</span>`:'—'}</td>
+          <td style="font-size:12px;">${a.notes||'—'}</td></tr>`;
       }).join('')}</tbody>
     </table>`;
 }
@@ -1036,18 +1046,18 @@ async function generatePDF(){
   doc.text(`Total: ${total}`,14,50);doc.text(`Cumplidas: ${cumplidas}`,60,50);doc.text(`No Cumplidas: ${noCum}`,110,50);doc.text(`Reprogramadas: ${repr}`,160,50);
   doc.setFont('helvetica','bold');doc.setTextColor(pct>=80?0:180,pct>=80?120:pct>=50?90:0,0);doc.text(`Cumplimiento: ${pct}%`,210,50);
   doc.autoTable({
-    head:[['Fecha','Hora','Empresa','Actividad','Asesor','Estado','Observaciones']],
+    head:[['Fecha','Hora','Empresa','Actividad','Asesor','Estado','Observaciones de desarrollo','Notas']],
     body:asns.map(a=>{
       const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
       const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
       const ad=cache.advisors.find(x=>x.id===a.advisorId)||{name:'—'};
-      return[fmtDate(a.date),a.time||'—',co.name,ac.name,ad.name,statusLabel(a.status),a.notes||'—'];
+      return[fmtDate(a.date),a.time||'—',co.name,ac.name,ad.name,statusLabel(a.status),a.observations||'—',a.notes||'—'];
     }),
     startY:60,theme:'grid',
-    styles:{fontSize:8,cellPadding:2,textColor:[50,50,50]},
+    styles:{fontSize:7.5,cellPadding:2,textColor:[50,50,50]},
     headStyles:{fillColor:[26,58,143],textColor:[255,255,255],fontStyle:'bold'},
     alternateRowStyles:{fillColor:[246,248,255]},
-    columnStyles:{0:{cellWidth:24},1:{cellWidth:14},2:{cellWidth:42},3:{cellWidth:42},4:{cellWidth:36},5:{cellWidth:26},6:{cellWidth:'auto'}},
+    columnStyles:{0:{cellWidth:22},1:{cellWidth:12},2:{cellWidth:32},3:{cellWidth:32},4:{cellWidth:30},5:{cellWidth:22},6:{cellWidth:60},7:{cellWidth:'auto'}},
     willDrawCell:data=>{if(data.section==='body'&&data.column.index===5){const s=asns[data.row.index]?.status;if(s==='cumplido'){data.cell.styles.textColor=[0,100,0];data.cell.styles.fontStyle='bold';}else if(s==='no_cumplido'){data.cell.styles.textColor=[160,0,0];data.cell.styles.fontStyle='bold';}}},
     margin:{left:10,right:10}
   });
@@ -1100,10 +1110,17 @@ function renderPortalActivities(){
   tbody.innerHTML=asns.map(a=>{
     const co=cache.companies.find(c=>c.id===a.companyId)||{name:'—'};
     const ac=cache.activities.find(x=>x.id===a.activityId)||{name:'—'};
-    return`<tr><td>${fmtDate(a.date)}</td><td>${a.time||'—'}</td><td>${co.name}</td><td>${ac.name}</td>
+    const obs=a.observations||'';
+    return`<tr>
+      <td>${fmtDate(a.date)}</td><td>${a.time||'—'}</td><td>${co.name}</td><td>${ac.name}</td>
       <td><span class="status-badge ${a.status||'programado'}">${statusLabel(a.status)}</span></td>
-      <td><small>${a.notes||'—'}</small></td>
-      <td><button class="btn btn-sm btn-outline-success" onclick="portalUpdateStatus('${a.id}')"><i class="fas fa-edit me-1"></i>Actualizar</button></td></tr>`;
+      <td style="max-width:260px;">
+        ${obs
+          ? `<div style="background:#f0fdf4;border-left:3px solid #5cb800;padding:6px 8px;border-radius:4px;font-size:12px;">${obs}</div>`
+          : `<span class="text-muted" style="font-size:12px;"><i class="fas fa-pen me-1"></i>Sin observaciones</span>`}
+      </td>
+      <td><button class="btn btn-sm btn-success" onclick="portalUpdateStatus('${a.id}')"><i class="fas fa-edit me-1"></i>${obs?'Editar obs.':'Agregar obs.'}</button></td>
+    </tr>`;
   }).join('');
 }
 function portalUpdateStatus(id){
